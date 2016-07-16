@@ -1,0 +1,12 @@
+package: github.com/solher/kit-gateway
+import:
+- package: github.com/go-kit/kit
+  subpackages:
+  - /endpoint
+  - sd
+- package: github.com/solher/kit-crud
+  subpackages:
+  - /client/grpc
+  - library
+- package: google.golang.org/grpc
+- package: github.com/gorilla/mux
