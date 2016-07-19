@@ -3,10 +3,14 @@ import:
 - package: github.com/go-kit/kit
   subpackages:
   - /endpoint
-  - sd
+  - log
+  - transport/http
+- package: github.com/go-zoo/bone
 - package: github.com/solher/kit-crud
   subpackages:
-  - /client/grpc
+  - /client
   - library
-- package: google.golang.org/grpc
-- package: github.com/gorilla/mux
+  - pb
+- package: golang.org/x/net
+  subpackages:
+  - /context

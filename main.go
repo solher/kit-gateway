@@ -17,6 +17,7 @@ import (
 func main() {
 	var (
 		httpAddr = flag.String("http.addr", ":3000", "Address for HTTP server")
+		crudAddr = flag.String("crud.addr", "localhost:8082", "Address for kit-crud")
 	)
 	flag.Parse()
 
@@ -32,7 +33,7 @@ func main() {
 	var libraryService libraryClient.Service
 	{
 		var err error
-		libraryService, err = libraryClient.NewGRPC("", logger)
+		libraryService, err = libraryClient.NewGRPC(*crudAddr, logger)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
