@@ -1,30 +1,30 @@
-package main
+package common
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/solher/kit-crud/client"
+	"github.com/solher/kit-crud/library"
 	"golang.org/x/net/context"
 )
 
-func encodeHTTPResponse(ctx context.Context, w http.ResponseWriter, code int, response interface{}) error {
+type Encoder func(w http.ResponseWriter, response interface{}) error
+
+func EncodeHTTPResponse(ctx context.Context, w http.ResponseWriter, code int, encoder Encoder, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
-	return json.NewEncoder(w).Encode(response)
+	return encoder(w, response)
 }
 
-func encodeHTTPError(_ context.Context, err error, w http.ResponseWriter) {
+func EncodeHTTPError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	var apiErr APIError
 	switch err {
-	case client.ErrNotFound:
+	case library.ErrNotFound:
 		apiErr = ErrForbidden
 	default:
 		apiErr = ErrInternal
 	}
-	fmt.Println(err)
 	w.WriteHeader(apiErr.Status)
 	json.NewEncoder(w).Encode(apiErr)
 }
