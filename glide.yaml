@@ -6,11 +6,7 @@ import:
   - log
   - transport/http
 - package: github.com/go-zoo/bone
-- package: github.com/solher/kit-crud
-  subpackages:
-  - /client
-  - library
-  - pb
+- package: github.com/solher/kit-crud/client
 - package: golang.org/x/net
   subpackages:
   - /context
