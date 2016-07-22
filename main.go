@@ -51,7 +51,7 @@ func main() {
 				os.Exit(1)
 			}
 			tracer, err = zipkin.NewTracer(
-				zipkin.NewRecorder(collector, false, "kit-gateway:3000", "App"),
+				zipkin.NewRecorder(collector, false, "kit-gateway:3000", "Gateway"),
 			)
 			if err != nil {
 				logger.Log("err", err)
