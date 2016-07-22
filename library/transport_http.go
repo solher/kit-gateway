@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/go-kit/kit/log"
-
+	"github.com/go-kit/kit/tracing/opentracing"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
+	stdopentracing "github.com/opentracing/opentracing-go"
 	"github.com/solher/kit-crud/client"
 	"github.com/solher/kit-crud/pb"
 	"github.com/solher/kit-gateway/common"
@@ -17,7 +18,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func MakeHTTPHandler(ctx context.Context, e client.Endpoints, logger log.Logger) http.Handler {
+func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentracing.Tracer, logger log.Logger) http.Handler {
 	opts := []httptransport.ServerOption{
 		httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(common.EncodeHTTPError),
@@ -28,35 +29,35 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, logger log.Logger)
 		e.CreateDocumentEndpoint,
 		decodeHTTPCreateDocumentRequest,
 		encodeHTTPCreateDocumentResponse,
-		opts...,
+		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "CreateDocument", logger)))...,
 	)
 	findDocumentsHandler := httptransport.NewServer(
 		ctx,
 		e.FindDocumentsEndpoint,
 		decodeHTTPFindDocumentsRequest,
 		encodeHTTPFindDocumentsResponse,
-		opts...,
+		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)))...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
 		ctx,
 		e.FindDocumentsByIDEndpoint,
 		decodeHTTPFindDocumentsByIDRequest,
 		encodeHTTPFindDocumentsByIDResponse,
-		opts...,
+		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocumentsByID", logger)))...,
 	)
 	replaceDocumentByIDHandler := httptransport.NewServer(
 		ctx,
 		e.ReplaceDocumentByIDEndpoint,
 		decodeHTTPReplaceDocumentByIDRequest,
 		encodeHTTPReplaceDocumentByIDResponse,
-		opts...,
+		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "ReplaceDocumentByID", logger)))...,
 	)
 	deleteDocumentsByIDHandler := httptransport.NewServer(
 		ctx,
 		e.DeleteDocumentsByIDEndpoint,
 		decodeHTTPDeleteDocumentsByIDRequest,
 		encodeHTTPDeleteDocumentsByIDResponse,
-		opts...,
+		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "DeleteDocumentsByID", logger)))...,
 	)
 
 	r := bone.New()
