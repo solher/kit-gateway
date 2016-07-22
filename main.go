@@ -51,7 +51,7 @@ func main() {
 				os.Exit(1)
 			}
 			tracer, err = zipkin.NewTracer(
-				zipkin.NewRecorder(collector, false, "localhost:80", "Library"),
+				zipkin.NewRecorder(collector, false, "kit-gateway:3000", "Gateway"),
 			)
 			if err != nil {
 				logger.Log("err", err)
@@ -68,7 +68,7 @@ func main() {
 	var libraryService libraryClient.Service
 	{
 		var err error
-		libraryService, err = libraryClient.NewGRPC(*crudAddr, logger)
+		libraryService, err = libraryClient.NewGRPC(*crudAddr, tracer, logger)
 		if err != nil {
 			logger.Log("err", err)
 			os.Exit(1)
