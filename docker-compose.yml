@@ -39,7 +39,6 @@ services:
     container_name: kit-gateway
     networks:
       - internal
-      - kit
     depends_on:
       - zipkin
     ports:
@@ -49,11 +48,11 @@ services:
     build: https://github.com/solher/kit-crud.git
     container_name: kit-crud
     networks:
-      - kit
+      - internal
     depends_on:
       - kit-gateway
+      - zipkin
 
 networks:
   internal:
   zipkin:
-  kit:
