@@ -119,7 +119,7 @@ func main() {
 	ctx := context.Background()
 
 	r := bone.New()
-	r.SubRoute("/library", library.MakeHTTPHandler(ctx, libraryEndpoints, logger))
+	r.SubRoute("/library", library.MakeHTTPHandler(ctx, libraryEndpoints, tracer, logger))
 	handler := HTTPLoggingMiddleware(logger)(r)
 
 	logger.Log("msg", "listening on "+*httpAddr+" (HTTP)")
