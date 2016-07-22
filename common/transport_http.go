@@ -10,7 +10,7 @@ import (
 
 type Encoder func(w http.ResponseWriter, response interface{}) error
 
-func EncodeHTTPResponse(ctx context.Context, w http.ResponseWriter, code int, encoder Encoder, response interface{}) error {
+func EncodeHTTPResponse(_ context.Context, w http.ResponseWriter, code int, encoder Encoder, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	return encoder(w, response)
