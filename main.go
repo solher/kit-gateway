@@ -4,7 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
-	"strings"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -22,7 +22,7 @@ import (
 func main() {
 	var (
 		httpAddr   = flag.String("http.addr", ":3000", "Address for HTTP server")
-		zipkinAddr = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Kafka server host:port")
+		zipkinAddr = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Scribe server host:port")
 		crudAddr   = flag.String("crud.addr", "", "Address for kit-crud")
 	)
 	flag.Parse()
@@ -41,9 +41,10 @@ func main() {
 		if *zipkinAddr != "" {
 			logger := log.NewContext(logger).With("tracer", "Zipkin")
 			logger.Log("msg", "sending trace to "+*zipkinAddr)
-			collector, err := zipkin.NewKafkaCollector(
-				strings.Split(*zipkinAddr, ","),
-				zipkin.KafkaLogger(logger),
+			collector, err := zipkin.NewScribeCollector(
+				*zipkinAddr,
+				3*time.Second,
+				zipkin.ScribeLogger(logger),
 			)
 			if err != nil {
 				logger.Log("err", err)
