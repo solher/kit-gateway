@@ -19,4 +19,4 @@ WORKDIR /
 
 USER app
 EXPOSE 3000
-CMD $APP_NAME -crud.addr="kit-crud:8082"
+CMD $APP_NAME -crud.addr="kit-crud:8082" -zipkin.addr="zipkin:9410"

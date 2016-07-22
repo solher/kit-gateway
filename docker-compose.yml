@@ -36,6 +36,7 @@ services:
 
   kit-gateway:
     build: https://github.com/solher/kit-gateway.git
+    container_name: kit-gateway
     networks:
       - internal
       - kit
@@ -46,6 +47,7 @@ services:
 
   kit-crud:
     build: https://github.com/solher/kit-crud.git
+    container_name: kit-crud
     networks:
       - kit
     depends_on:
