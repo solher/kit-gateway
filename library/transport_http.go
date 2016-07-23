@@ -39,9 +39,9 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		encodeHTTPFindDocumentsResponse,
 		append(
 			opts,
-			httptransport.ServerBefore(AddHTTPAnnotations),
 			httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
-			httptransport.ServerBefore(AddHTTPAnnotations),
+			httptransport.ServerBefore(opentracing.ToHTTPRequest(tracer, logger)),
+			httptransport.ServerBefore(AddHTTPAnnotations(tracer)),
 		)...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
@@ -75,15 +75,23 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 	return r
 }
 
-func AddHTTPAnnotations(ctx context.Context, r *http.Request) context.Context {
-	span := stdopentracing.SpanFromContext(ctx)
-	if span == nil {
-		fmt.Println("nil span")
-		return ctx
+func AddHTTPAnnotations(tracer stdopentracing.Tracer) httptransport.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		span := stdopentracing.SpanFromContext(ctx)
+		// if span == nil {
+		// 	fmt.Println("nil span")
+		// 	return ctx
+		// }
+		if span == nil {
+			// All we can do is create a new root span.
+			fmt.Println("nil span")
+			span = tracer.StartSpan("")
+		}
+
+		span = span.SetTag("foo", "bar")
+		span.LogEventWithPayload("url", r.URL.RequestURI())
+		return stdopentracing.ContextWithSpan(ctx, span)
 	}
-	span = span.SetTag("foo", "bar")
-	span.LogEventWithPayload("url", r.URL.RequestURI())
-	return stdopentracing.ContextWithSpan(ctx, span)
 }
 
 func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {

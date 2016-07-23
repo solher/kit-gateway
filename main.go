@@ -86,9 +86,7 @@ func main() {
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
-		findDocumentsEndpoint = Test("nil span after endpoint")(findDocumentsEndpoint)
 		findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
-		findDocumentsEndpoint = Test("nil span before endpoint")(findDocumentsEndpoint)
 		// findDocumentsEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
