@@ -78,7 +78,8 @@ func AddHTTPAnnotations(ctx context.Context, r *http.Request) context.Context {
 	if span == nil {
 		return ctx
 	}
-	span.SetTag("foo", "bar")
+	span = span.SetTag("foo", "bar")
+	span.LogEventWithPayload("url", r.URL.RequestURI())
 	return stdopentracing.ContextWithSpan(ctx, span)
 }
 
