@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/tracing/opentracing"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
@@ -79,31 +78,31 @@ func main() {
 	var createDocumentEndpoint endpoint.Endpoint
 	{
 		createDocumentEndpoint = libraryClient.MakeCreateDocumentEndpoint(libraryService)
-		createDocumentEndpoint = opentracing.TraceServer(tracer, "CreateDocument")(createDocumentEndpoint)
+		// createDocumentEndpoint = opentracing.TraceServer(tracer, "CreateDocument")(createDocumentEndpoint)
 		// createDocumentEndpoint = EndpointLoggingMiddleware(logger)(createDocumentEndpoint)
 	}
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
-		findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
+		// findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
 		// findDocumentsEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		findDocumentsByIDEndpoint = libraryClient.MakeFindDocumentsByIDEndpoint(libraryService)
-		findDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "FindDocumentsByID")(findDocumentsByIDEndpoint)
+		// findDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "FindDocumentsByID")(findDocumentsByIDEndpoint)
 		// findDocumentsByIDEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsByIDEndpoint)
 	}
 	var replaceDocumentByIDEndpoint endpoint.Endpoint
 	{
 		replaceDocumentByIDEndpoint = libraryClient.MakeReplaceDocumentByIDEndpoint(libraryService)
-		replaceDocumentByIDEndpoint = opentracing.TraceServer(tracer, "ReplaceDocumentByID")(replaceDocumentByIDEndpoint)
+		// replaceDocumentByIDEndpoint = opentracing.TraceServer(tracer, "ReplaceDocumentByID")(replaceDocumentByIDEndpoint)
 		// replaceDocumentByIDEndpoint = EndpointLoggingMiddleware(logger)(replaceDocumentByIDEndpoint)
 	}
 	var deleteDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		deleteDocumentsByIDEndpoint = libraryClient.MakeDeleteDocumentsByIDEndpoint(libraryService)
-		deleteDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "DeleteDocumentsByID")(deleteDocumentsByIDEndpoint)
+		// deleteDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "DeleteDocumentsByID")(deleteDocumentsByIDEndpoint)
 		// deleteDocumentsByIDEndpoint = EndpointLoggingMiddleware(logger)(deleteDocumentsByIDEndpoint)
 	}
 
