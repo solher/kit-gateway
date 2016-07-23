@@ -38,7 +38,7 @@ func (mw *httpLoggingMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Reque
 	defer func(begin time.Time) {
 		mw.logger.Log(
 			"method", r.Method,
-			"url", r.URL.RequestURI(),
+			"url", r.URL.String(),
 			"remote", r.RemoteAddr,
 			"agent", r.UserAgent(),
 			"code", proxy.code,

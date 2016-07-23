@@ -1,11 +1,8 @@
 package library
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -14,6 +11,8 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
+	// otext "github.com/opentracing/opentracing-go/ext"
+
 	"github.com/solher/kit-crud/client"
 	"github.com/solher/kit-crud/pb"
 	"github.com/solher/kit-gateway/common"
@@ -23,7 +22,7 @@ import (
 
 func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentracing.Tracer, logger log.Logger) http.Handler {
 	opts := []httptransport.ServerOption{
-		httptransport.ServerErrorLogger(logger),
+		// httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(common.EncodeHTTPError),
 	}
 
@@ -41,9 +40,10 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		encodeHTTPFindDocumentsResponse,
 		append(
 			opts,
-			// httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
-			// httptransport.ServerBefore(opentracing.ToHTTPRequest(tracer, logger)),
-			httptransport.ServerBefore(FromHTTPRequest(tracer, "FindDocuments")),
+			httptransport.ServerBefore(
+				opentracing.FromHTTPRequest(tracer, "FindDocuments", logger),
+				common.AddHTTPAnnotations,
+			),
 		)...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
@@ -75,24 +75,6 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 	r.Put("/documents/:id", replaceDocumentByIDHandler)
 	r.Delete("/documents/:ids", deleteDocumentsByIDHandler)
 	return r
-}
-
-func FromHTTPRequest(tracer stdopentracing.Tracer, operationName string) httptransport.RequestFunc {
-	return func(ctx context.Context, r *http.Request) context.Context {
-		span := stdopentracing.SpanFromContext(ctx)
-		if span == nil {
-			span = tracer.StartSpan(operationName)
-		}
-		buf := bytes.NewBuffer(nil)
-		body, _ := ioutil.ReadAll(io.TeeReader(r.Body, buf))
-		r.Body = ioutil.NopCloser(buf)
-		span = span.SetTag("req.body", string(body))
-		span = span.SetTag("req.method", r.Method)
-		span = span.SetTag("req.url", r.RequestURI)
-		span = span.SetTag("req.remote", r.RemoteAddr)
-		span = span.SetTag("req.agent", r.UserAgent())
-		return stdopentracing.ContextWithSpan(ctx, span)
-	}
 }
 
 func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {
