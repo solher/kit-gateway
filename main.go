@@ -2,14 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/tracing/opentracing"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
@@ -80,33 +78,22 @@ func main() {
 	var createDocumentEndpoint endpoint.Endpoint
 	{
 		createDocumentEndpoint = libraryClient.MakeCreateDocumentEndpoint(libraryService)
-		createDocumentEndpoint = opentracing.TraceServer(tracer, "CreateDocument")(createDocumentEndpoint)
-		// createDocumentEndpoint = EndpointLoggingMiddleware(logger)(createDocumentEndpoint)
 	}
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
-		// findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
-		findDocumentsEndpoint = Test("nil span before endpoint")(findDocumentsEndpoint)
-		// findDocumentsEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		findDocumentsByIDEndpoint = libraryClient.MakeFindDocumentsByIDEndpoint(libraryService)
-		findDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "FindDocumentsByID")(findDocumentsByIDEndpoint)
-		// findDocumentsByIDEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsByIDEndpoint)
 	}
 	var replaceDocumentByIDEndpoint endpoint.Endpoint
 	{
 		replaceDocumentByIDEndpoint = libraryClient.MakeReplaceDocumentByIDEndpoint(libraryService)
-		replaceDocumentByIDEndpoint = opentracing.TraceServer(tracer, "ReplaceDocumentByID")(replaceDocumentByIDEndpoint)
-		// replaceDocumentByIDEndpoint = EndpointLoggingMiddleware(logger)(replaceDocumentByIDEndpoint)
 	}
 	var deleteDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		deleteDocumentsByIDEndpoint = libraryClient.MakeDeleteDocumentsByIDEndpoint(libraryService)
-		deleteDocumentsByIDEndpoint = opentracing.TraceServer(tracer, "DeleteDocumentsByID")(deleteDocumentsByIDEndpoint)
-		// deleteDocumentsByIDEndpoint = EndpointLoggingMiddleware(logger)(deleteDocumentsByIDEndpoint)
 	}
 
 	libraryEndpoints := libraryClient.Endpoints{
@@ -116,12 +103,18 @@ func main() {
 		ReplaceDocumentByIDEndpoint: replaceDocumentByIDEndpoint,
 		DeleteDocumentsByIDEndpoint: deleteDocumentsByIDEndpoint,
 	}
-
 	// Transport domain.
 	ctx := context.Background()
 
+	libraryHandlers := library.MakeHTTPHandlers(ctx, libraryEndpoints, tracer, logger)
+
 	r := bone.New()
-	r.SubRoute("/library", library.MakeHTTPHandler(ctx, libraryEndpoints, tracer, logger))
+	r.Post("/library/documents", libraryHandlers.CreateDocumentHandler)
+	r.Get("/library/documents", libraryHandlers.FindDocumentsHandler)
+	r.Get("/library/documents/:ids", libraryHandlers.FindDocumentsByIDHandler)
+	r.Put("/library/documents/:id", libraryHandlers.ReplaceDocumentByIDHandler)
+	r.Delete("/library/documents/:ids", libraryHandlers.DeleteDocumentsByIDHandler)
+
 	handler := HTTPLoggingMiddleware(logger)(r)
 
 	logger.Log("msg", "listening on "+*httpAddr+" (HTTP)")
@@ -129,17 +122,5 @@ func main() {
 	if err := http.ListenAndServe(*httpAddr, handler); err != nil {
 		logger.Log("err", err)
 		os.Exit(1)
-	}
-}
-
-func Test(comment string) endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (interface{}, error) {
-			span := stdopentracing.SpanFromContext(ctx)
-			if span == nil {
-				fmt.Println(comment)
-			}
-			return next(ctx, request)
-		}
 	}
 }

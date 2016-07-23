@@ -11,7 +11,6 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
-	// otext "github.com/opentracing/opentracing-go/ext"
 
 	"github.com/solher/kit-crud/client"
 	"github.com/solher/kit-crud/pb"
@@ -20,9 +19,16 @@ import (
 	"golang.org/x/net/context"
 )
 
-func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentracing.Tracer, logger log.Logger) http.Handler {
+type Handlers struct {
+	CreateDocumentHandler      http.Handler
+	FindDocumentsHandler       http.Handler
+	FindDocumentsByIDHandler   http.Handler
+	ReplaceDocumentByIDHandler http.Handler
+	DeleteDocumentsByIDHandler http.Handler
+}
+
+func MakeHTTPHandlers(ctx context.Context, e client.Endpoints, tracer stdopentracing.Tracer, logger log.Logger) Handlers {
 	opts := []httptransport.ServerOption{
-		// httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(common.EncodeHTTPError),
 	}
 
@@ -31,7 +37,13 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		e.CreateDocumentEndpoint,
 		decodeHTTPCreateDocumentRequest,
 		encodeHTTPCreateDocumentResponse,
-		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "CreateDocument", logger)))...,
+		append(
+			opts,
+			httptransport.ServerBefore(
+				opentracing.FromHTTPRequest(tracer, "CreateDocument", logger),
+				common.AddHTTPAnnotations,
+			),
+		)...,
 	)
 	findDocumentsHandler := httptransport.NewServer(
 		ctx,
@@ -51,30 +63,47 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		e.FindDocumentsByIDEndpoint,
 		decodeHTTPFindDocumentsByIDRequest,
 		encodeHTTPFindDocumentsByIDResponse,
-		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocumentsByID", logger)))...,
+		append(
+			opts,
+			httptransport.ServerBefore(
+				opentracing.FromHTTPRequest(tracer, "FindDocumentsByID", logger),
+				common.AddHTTPAnnotations,
+			),
+		)...,
 	)
 	replaceDocumentByIDHandler := httptransport.NewServer(
 		ctx,
 		e.ReplaceDocumentByIDEndpoint,
 		decodeHTTPReplaceDocumentByIDRequest,
 		encodeHTTPReplaceDocumentByIDResponse,
-		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "ReplaceDocumentByID", logger)))...,
+		append(
+			opts,
+			httptransport.ServerBefore(
+				opentracing.FromHTTPRequest(tracer, "ReplaceDocumentByID", logger),
+				common.AddHTTPAnnotations,
+			),
+		)...,
 	)
 	deleteDocumentsByIDHandler := httptransport.NewServer(
 		ctx,
 		e.DeleteDocumentsByIDEndpoint,
 		decodeHTTPDeleteDocumentsByIDRequest,
 		encodeHTTPDeleteDocumentsByIDResponse,
-		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "DeleteDocumentsByID", logger)))...,
+		append(
+			opts,
+			httptransport.ServerBefore(
+				opentracing.FromHTTPRequest(tracer, "DeleteDocumentsByID", logger),
+				common.AddHTTPAnnotations,
+			),
+		)...,
 	)
-
-	r := bone.New()
-	r.Post("/documents", createDocumentHandler)
-	r.Get("/documents", findDocumentsHandler)
-	r.Get("/documents/:ids", findDocumentsByIDHandler)
-	r.Put("/documents/:id", replaceDocumentByIDHandler)
-	r.Delete("/documents/:ids", deleteDocumentsByIDHandler)
-	return r
+	return Handlers{
+		CreateDocumentHandler:      createDocumentHandler,
+		FindDocumentsHandler:       findDocumentsHandler,
+		FindDocumentsByIDHandler:   findDocumentsByIDHandler,
+		ReplaceDocumentByIDHandler: replaceDocumentByIDHandler,
+		DeleteDocumentsByIDHandler: deleteDocumentsByIDHandler,
+	}
 }
 
 func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {
