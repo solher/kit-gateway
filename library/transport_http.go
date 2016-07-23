@@ -38,8 +38,8 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		encodeHTTPFindDocumentsResponse,
 		append(
 			opts,
-			httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
 			httptransport.ServerBefore(AddHTTPAnnotations),
+			httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
 		)...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
