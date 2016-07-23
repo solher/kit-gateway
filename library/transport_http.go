@@ -3,6 +3,7 @@ package library
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -40,6 +41,7 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 			opts,
 			httptransport.ServerBefore(AddHTTPAnnotations),
 			httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
+			httptransport.ServerBefore(AddHTTPAnnotations),
 		)...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
@@ -76,6 +78,7 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 func AddHTTPAnnotations(ctx context.Context, r *http.Request) context.Context {
 	span := stdopentracing.SpanFromContext(ctx)
 	if span == nil {
+		fmt.Println("nil span")
 		return ctx
 	}
 	span = span.SetTag("foo", "bar")

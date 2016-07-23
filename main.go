@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -85,7 +86,9 @@ func main() {
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
+		findDocumentsEndpoint = Test("nil span after endpoint")(findDocumentsEndpoint)
 		findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
+		findDocumentsEndpoint = Test("nil span before endpoint")(findDocumentsEndpoint)
 		// findDocumentsEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
@@ -127,5 +130,17 @@ func main() {
 	if err := http.ListenAndServe(*httpAddr, handler); err != nil {
 		logger.Log("err", err)
 		os.Exit(1)
+	}
+}
+
+func Test(comment string) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			span := stdopentracing.SpanFromContext(ctx)
+			if span == nil {
+				fmt.Println(comment)
+			}
+			return next(ctx, request)
+		}
 	}
 }
