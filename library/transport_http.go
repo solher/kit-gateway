@@ -36,7 +36,11 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 		e.FindDocumentsEndpoint,
 		decodeHTTPFindDocumentsRequest,
 		encodeHTTPFindDocumentsResponse,
-		append(opts, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)))...,
+		append(
+			opts,
+			httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "FindDocuments", logger)),
+			httptransport.ServerBefore(AddHTTPAnnotations),
+		)...,
 	)
 	findDocumentsByIDHandler := httptransport.NewServer(
 		ctx,
@@ -69,12 +73,14 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 	return r
 }
 
-// func AddMetadata(tracer stdopentracing.Tracer) httptransport.RequestFunc {
-// 	return func(ctx context.Context, r *http.Request) context.Context {
-// 		tracer
-// 		return ctx
-// 	}
-// }
+func AddHTTPAnnotations(ctx context.Context, r *http.Request) context.Context {
+	span := stdopentracing.SpanFromContext(ctx)
+	if span == nil {
+		return ctx
+	}
+	span.SetTag("foo", "bar")
+	return stdopentracing.ContextWithSpan(ctx, span)
+}
 
 func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var document *pb.Document
