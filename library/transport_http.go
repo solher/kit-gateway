@@ -69,6 +69,13 @@ func MakeHTTPHandler(ctx context.Context, e client.Endpoints, tracer stdopentrac
 	return r
 }
 
+// func AddMetadata(tracer stdopentracing.Tracer) httptransport.RequestFunc {
+// 	return func(ctx context.Context, r *http.Request) context.Context {
+// 		tracer
+// 		return ctx
+// 	}
+// }
+
 func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var document *pb.Document
 	if err := json.NewDecoder(r.Body).Decode(document); err != nil {

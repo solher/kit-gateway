@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/tracing/opentracing"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
@@ -84,7 +85,7 @@ func main() {
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
-		// findDocumentsEndpoint = opentracing.TraceServer(tracer, "FindDocuments")(findDocumentsEndpoint)
+		findDocumentsEndpoint = opentracing.TraceServer(tracer, "Toto")(findDocumentsEndpoint)
 		// findDocumentsEndpoint = EndpointLoggingMiddleware(logger)(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
