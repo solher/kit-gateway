@@ -20,6 +20,7 @@ func AddHTTPAnnotations(ctx context.Context, r *http.Request) context.Context {
 	buf := bytes.NewBuffer(nil)
 	body, _ := ioutil.ReadAll(io.TeeReader(r.Body, buf))
 	r.Body = ioutil.NopCloser(buf)
+	span = span.SetTag("transport", "HTTP")
 	span = span.SetTag("req.body", string(body))
 	span = span.SetTag("req.method", r.Method)
 	span = span.SetTag("req.url", r.URL.String())
