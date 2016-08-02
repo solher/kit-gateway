@@ -90,22 +90,27 @@ func main() {
 	var createDocumentEndpoint endpoint.Endpoint
 	{
 		createDocumentEndpoint = libraryClient.MakeCreateDocumentEndpoint(libraryService)
+		createDocumentEndpoint = EndpointTracingMiddleware(createDocumentEndpoint)
 	}
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
+		findDocumentsEndpoint = EndpointTracingMiddleware(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		findDocumentsByIDEndpoint = libraryClient.MakeFindDocumentsByIDEndpoint(libraryService)
+		findDocumentsByIDEndpoint = EndpointTracingMiddleware(findDocumentsByIDEndpoint)
 	}
 	var replaceDocumentByIDEndpoint endpoint.Endpoint
 	{
 		replaceDocumentByIDEndpoint = libraryClient.MakeReplaceDocumentByIDEndpoint(libraryService)
+		replaceDocumentByIDEndpoint = EndpointTracingMiddleware(replaceDocumentByIDEndpoint)
 	}
 	var deleteDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		deleteDocumentsByIDEndpoint = libraryClient.MakeDeleteDocumentsByIDEndpoint(libraryService)
+		deleteDocumentsByIDEndpoint = EndpointTracingMiddleware(deleteDocumentsByIDEndpoint)
 	}
 
 	libraryEndpoints := libraryClient.Endpoints{
@@ -161,6 +166,19 @@ func main() {
 	if err := <-errc; err != nil {
 		logger.Log("err", err)
 		exitCode = 1
+	}
+}
+
+func EndpointTracingMiddleware(next endpoint.Endpoint) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		defer func() {
+			if err != nil {
+				if span := stdopentracing.SpanFromContext(ctx); span != nil {
+					span.SetTag("error", err)
+				}
+			}
+		}()
+		return next(ctx, request)
 	}
 }
 
