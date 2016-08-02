@@ -24,11 +24,6 @@ var (
 		Description: "An internal error occured. Please retry later.",
 		ErrorCode:   "INTERNAL_ERROR",
 	}
-	ErrJsonRendering = APIError{
-		Status:      500,
-		Description: "The JSON rendering failed.",
-		ErrorCode:   "JSON_RENDERING_ERROR",
-	}
 	ErrBodyDecoding = APIError{
 		Status:      400,
 		Description: "Could not decode the JSON request.",

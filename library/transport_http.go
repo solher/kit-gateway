@@ -29,7 +29,7 @@ type Handlers struct {
 
 func MakeHTTPHandlers(ctx context.Context, e client.Endpoints, tracer stdopentracing.Tracer, logger log.Logger) Handlers {
 	opts := []httptransport.ServerOption{
-		httptransport.ServerErrorEncoder(common.EncodeHTTPError),
+		httptransport.ServerErrorEncoder(common.ServerErrorEncoder),
 	}
 
 	createDocumentHandler := httptransport.NewServer(
@@ -121,7 +121,7 @@ func decodeHTTPCreateDocumentRequest(_ context.Context, r *http.Request) (interf
 func encodeHTTPCreateDocumentResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	res := response.(*pb.CreateDocumentReply)
 	if len(res.Err) > 0 {
-		return errors.New(res.Err)
+		return common.EncodeHTTPError(ctx, w, errors.New(res.Err))
 	}
 	return common.EncodeHTTPResponse(ctx, w, http.StatusCreated, documentEncoder, res.Document)
 }
@@ -136,7 +136,7 @@ func decodeHTTPFindDocumentsRequest(_ context.Context, r *http.Request) (interfa
 func encodeHTTPFindDocumentsResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	res := response.(*pb.FindDocumentsReply)
 	if len(res.Err) > 0 {
-		return errors.New(res.Err)
+		return common.EncodeHTTPError(ctx, w, errors.New(res.Err))
 	}
 	return common.EncodeHTTPResponse(ctx, w, http.StatusOK, documentsEncoder, res.Documents)
 }
@@ -154,7 +154,7 @@ func decodeHTTPFindDocumentsByIDRequest(_ context.Context, r *http.Request) (int
 func encodeHTTPFindDocumentsByIDResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	res := response.(*pb.FindDocumentsByIdReply)
 	if len(res.Err) > 0 {
-		return errors.New(res.Err)
+		return common.EncodeHTTPError(ctx, w, errors.New(res.Err))
 	}
 	if len(res.Documents) == 1 {
 		return common.EncodeHTTPResponse(ctx, w, http.StatusOK, documentEncoder, res.Documents[0])
@@ -178,7 +178,7 @@ func decodeHTTPReplaceDocumentByIDRequest(_ context.Context, r *http.Request) (i
 func encodeHTTPReplaceDocumentByIDResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	res := response.(*pb.ReplaceDocumentByIdReply)
 	if len(res.Err) > 0 {
-		return errors.New(res.Err)
+		return common.EncodeHTTPError(ctx, w, errors.New(res.Err))
 	}
 	return common.EncodeHTTPResponse(ctx, w, http.StatusOK, documentEncoder, res.Document)
 }
@@ -196,7 +196,7 @@ func decodeHTTPDeleteDocumentsByIDRequest(_ context.Context, r *http.Request) (i
 func encodeHTTPDeleteDocumentsByIDResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	res := response.(*pb.DeleteDocumentsByIdReply)
 	if len(res.Err) > 0 {
-		return errors.New(res.Err)
+		return common.EncodeHTTPError(ctx, w, errors.New(res.Err))
 	}
 	if len(res.Documents) == 1 {
 		return common.EncodeHTTPResponse(ctx, w, http.StatusOK, documentEncoder, res.Documents[0])

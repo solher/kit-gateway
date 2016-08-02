@@ -2,8 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -26,6 +30,11 @@ func main() {
 	)
 	flag.Parse()
 
+	exitCode := 0
+	defer func() {
+		os.Exit(exitCode)
+	}()
+
 	// Logging domain.
 	var logger log.Logger
 	{
@@ -47,14 +56,16 @@ func main() {
 			)
 			if err != nil {
 				logger.Log("err", err)
-				os.Exit(1)
+				exitCode = 1
+				return
 			}
 			tracer, err = zipkin.NewTracer(
 				zipkin.NewRecorder(collector, false, "kit-gateway:3000", "Gateway"),
 			)
 			if err != nil {
 				logger.Log("err", err)
-				os.Exit(1)
+				exitCode = 1
+				return
 			}
 		} else {
 			logger := log.NewContext(logger).With("tracer", "none")
@@ -70,7 +81,8 @@ func main() {
 		libraryService, err = libraryClient.NewGRPC(*crudAddr, tracer, logger)
 		if err != nil {
 			logger.Log("err", err)
-			os.Exit(1)
+			exitCode = 1
+			return
 		}
 	}
 
@@ -78,27 +90,22 @@ func main() {
 	var createDocumentEndpoint endpoint.Endpoint
 	{
 		createDocumentEndpoint = libraryClient.MakeCreateDocumentEndpoint(libraryService)
-		createDocumentEndpoint = TraceTransportBoundaries(createDocumentEndpoint)
 	}
 	var findDocumentsEndpoint endpoint.Endpoint
 	{
 		findDocumentsEndpoint = libraryClient.MakeFindDocumentsEndpoint(libraryService)
-		findDocumentsEndpoint = TraceTransportBoundaries(findDocumentsEndpoint)
 	}
 	var findDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		findDocumentsByIDEndpoint = libraryClient.MakeFindDocumentsByIDEndpoint(libraryService)
-		findDocumentsByIDEndpoint = TraceTransportBoundaries(findDocumentsByIDEndpoint)
 	}
 	var replaceDocumentByIDEndpoint endpoint.Endpoint
 	{
 		replaceDocumentByIDEndpoint = libraryClient.MakeReplaceDocumentByIDEndpoint(libraryService)
-		replaceDocumentByIDEndpoint = TraceTransportBoundaries(replaceDocumentByIDEndpoint)
 	}
 	var deleteDocumentsByIDEndpoint endpoint.Endpoint
 	{
 		deleteDocumentsByIDEndpoint = libraryClient.MakeDeleteDocumentsByIDEndpoint(libraryService)
-		deleteDocumentsByIDEndpoint = TraceTransportBoundaries(deleteDocumentsByIDEndpoint)
 	}
 
 	libraryEndpoints := libraryClient.Endpoints{
@@ -109,9 +116,11 @@ func main() {
 		DeleteDocumentsByIDEndpoint: deleteDocumentsByIDEndpoint,
 	}
 
-	// Transport domain.
+	// Mechanical domain.
 	ctx := context.Background()
+	errc := make(chan error)
 
+	// Transport domain.
 	libraryHandlers := library.MakeHTTPHandlers(ctx, libraryEndpoints, tracer, logger)
 
 	r := bone.New()
@@ -123,25 +132,35 @@ func main() {
 
 	handler := HTTPLoggingMiddleware(logger)(r)
 
-	logger.Log("msg", "listening on "+*httpAddr+" (HTTP)")
-
-	if err := http.ListenAndServe(*httpAddr, handler); err != nil {
+	conn, err := net.Listen("tcp", *httpAddr)
+	if err != nil {
 		logger.Log("err", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
-}
-
-func TraceTransportBoundaries(next endpoint.Endpoint) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		span := stdopentracing.SpanFromContext(ctx)
-		if span != nil {
-			span.LogEvent("Transport domain ends")
-			ctx = stdopentracing.ContextWithSpan(ctx, span)
-			defer func() {
-				span.LogEvent("Transport domain begins")
-			}()
+	defer conn.Close()
+	logger.Log("msg", "listening on "+*httpAddr+" (HTTP)")
+	go func() {
+		if err := http.Serve(conn, handler); err != nil {
+			errc <- err
+			return
 		}
-		return next(ctx, request)
+	}()
+
+	// Interrupt handler.
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		logger.Log(
+			"signal", fmt.Sprintf("%s", <-c),
+			"msg", "gracefully shutting down",
+		)
+		errc <- nil
+	}()
+
+	if err := <-errc; err != nil {
+		logger.Log("err", err)
+		exitCode = 1
 	}
 }
 
