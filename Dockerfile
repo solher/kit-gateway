@@ -16,6 +16,8 @@ RUN go get -u ./... \
 && apk del git \
 && rm -rf /go/*
 
+WORKDIR /
+
 EXPOSE 3000
-ENTRYPOINT ["env2flags", "ZIPKIN_ADDR", "--"]
+ENTRYPOINT ["env2flags", "ZIPKIN_ADDR", "CRUD_ADDR", "--"]
 CMD ["app"]
