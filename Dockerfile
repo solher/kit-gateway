@@ -1,6 +1,5 @@
 FROM golang:1.6-alpine
 
-ENV APP_NAME="kit-gateway"
 ENV SRC_PATH="/go/src/github.com/solher/kit-gateway"
 
 ADD https://raw.githubusercontent.com/solher/env2flags/master/env2flags.sh /usr/local/bin/env2flags
@@ -12,10 +11,11 @@ COPY . $SRC_PATH
 WORKDIR $SRC_PATH
 
 RUN go get -u ./... \
-&& go build -v \
-&& cp $APP_NAME /usr/local/bin \
+&& go build -o app \
+&& cp app /usr/local/bin \
 && apk del git \
 && rm -rf /go/*
 
 EXPOSE 3000
-CMD ["$APP_NAME"]
+ENTRYPOINT ["env2flags", "ZIPKIN_ADDR", "--"]
+CMD ["app"]
