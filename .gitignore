@@ -1,6 +1,3 @@
 /kit-gateway
 /debug
 /.vscode
-/vendor
-/Dockerfile.override
-/docker-compose.override.yml
