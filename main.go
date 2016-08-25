@@ -13,8 +13,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-zoo/bone"
 	stdopentracing "github.com/opentracing/opentracing-go"
-	appdashot "github.com/sourcegraph/appdash/opentracing"
 	"sourcegraph.com/sourcegraph/appdash"
+	appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"
 
 	libraryClient "github.com/solher/kit-crud/client"
 
