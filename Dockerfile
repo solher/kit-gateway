@@ -9,4 +9,4 @@ WORKDIR /
 
 EXPOSE 3000
 ENTRYPOINT ["env2flags", "APPDASH_ADDR", "CRUD_ADDR", "--"]
-CMD ["kit-gateway"]
+CMD ["/usr/local/bin/kit-gateway"]
