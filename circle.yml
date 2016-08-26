@@ -63,4 +63,4 @@ deployment:
       - docker tag ${REGISTRY}/${PROJECT_NAME}/${APP_NAME}:$CIRCLE_SHA1 ${REGISTRY}/${PROJECT_NAME}/${APP_NAME}:$CIRCLE_TAG
       - sudo /opt/google-cloud-sdk/bin/gcloud docker push ${REGISTRY}/${PROJECT_NAME}/${APP_NAME}
       - sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
-      - kubectl --namespace=production patch deployment ${APP_NAME} -p '{"spec":{"template":{"spec":{"containers":[{"name":"${APP_NAME}","image":"${REGISTRY}/${PROJECT_NAME}/${APP_NAME}:'"$CIRCLE_TAG"'"}]}}}}'
+      - kubectl --namespace=production patch deployment ${APP_NAME} -p '{"spec":{"template":{"spec":{"containers":[{"name":"'${APP_NAME}'","image":"'${REGISTRY}'/'${PROJECT_NAME}'/'${APP_NAME}':'$CIRCLE_TAG'"}]}}}}'
