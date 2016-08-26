@@ -43,6 +43,8 @@ func main() {
 		logger = log.NewContext(logger).With("caller", log.DefaultCaller)
 	}
 
+	logger.Log("msg", "hello")
+
 	// Tracing domain.
 	var tracer stdopentracing.Tracer
 	{
