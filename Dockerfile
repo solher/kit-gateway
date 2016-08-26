@@ -8,6 +8,5 @@ COPY ./kit-gateway /usr/local/bin
 WORKDIR /
 
 EXPOSE 3000
-# ENTRYPOINT ["env2flags", "APPDASH_ADDR", "CRUD_ADDR", "--"]
-# CMD ["kit-gateway"]
-CMD sleep 10000000
+ENTRYPOINT ["env2flags", "APPDASH_ADDR", "CRUD_ADDR", "--"]
+CMD ["kit-gateway"]
