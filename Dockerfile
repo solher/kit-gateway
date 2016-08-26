@@ -9,4 +9,5 @@ WORKDIR /
 
 EXPOSE 3000
 # ENTRYPOINT ["env2flags", "APPDASH_ADDR", "CRUD_ADDR", "--"]
-CMD ["kit-gateway"]
+# CMD ["kit-gateway"]
+CMD sleep 10000000
